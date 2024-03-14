@@ -28,8 +28,8 @@
 namespace diskann
 {
 
-template <typename T, typename LabelT>
-PQFlashIndex<T, LabelT>::PQFlashIndex(std::shared_ptr<AlignedFileReader> &fileReader, diskann::Metric m)
+template <typename T, typename TagT, typename LabelT>
+PQFlashIndex<T, TagT, LabelT>::PQFlashIndex(std::shared_ptr<AlignedFileReader> &fileReader, diskann::Metric m)
     : reader(fileReader), metric(m), _thread_data(nullptr)
 {
     diskann::Metric metric_to_invoke = m;
@@ -55,7 +55,7 @@ PQFlashIndex<T, LabelT>::PQFlashIndex(std::shared_ptr<AlignedFileReader> &fileRe
     this->_dist_cmp_float.reset(diskann::get_distance_function<float>(metric_to_invoke));
 }
 
-template <typename T, typename LabelT> PQFlashIndex<T, LabelT>::~PQFlashIndex()
+template <typename T, typename TagT, typename LabelT> PQFlashIndex<T, TagT, LabelT>::~PQFlashIndex()
 {
 #ifndef EXEC_ENV_OLS
     if (data != nullptr)
@@ -95,30 +95,30 @@ template <typename T, typename LabelT> PQFlashIndex<T, LabelT>::~PQFlashIndex()
     }
 }
 
-template <typename T, typename LabelT> inline uint64_t PQFlashIndex<T, LabelT>::get_node_sector(uint64_t node_id)
+template <typename T, typename TagT, typename LabelT> inline uint64_t PQFlashIndex<T, TagT, LabelT>::get_node_sector(uint64_t node_id)
 {
     return 1 + (_nnodes_per_sector > 0 ? node_id / _nnodes_per_sector
                                        : node_id * DIV_ROUND_UP(_max_node_len, defaults::SECTOR_LEN));
 }
 
-template <typename T, typename LabelT>
-inline char *PQFlashIndex<T, LabelT>::offset_to_node(char *sector_buf, uint64_t node_id)
+template <typename T, typename TagT, typename LabelT>
+inline char *PQFlashIndex<T, TagT, LabelT>::offset_to_node(char *sector_buf, uint64_t node_id)
 {
     return sector_buf + (_nnodes_per_sector == 0 ? 0 : (node_id % _nnodes_per_sector) * _max_node_len);
 }
 
-template <typename T, typename LabelT> inline uint32_t *PQFlashIndex<T, LabelT>::offset_to_node_nhood(char *node_buf)
+template <typename T, typename TagT, typename LabelT> inline uint32_t *PQFlashIndex<T, TagT, LabelT>::offset_to_node_nhood(char *node_buf)
 {
     return (unsigned *)(node_buf + _disk_bytes_per_point);
 }
 
-template <typename T, typename LabelT> inline T *PQFlashIndex<T, LabelT>::offset_to_node_coords(char *node_buf)
+template <typename T, typename TagT, typename LabelT> inline T *PQFlashIndex<T, TagT, LabelT>::offset_to_node_coords(char *node_buf)
 {
     return (T *)(node_buf);
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::setup_thread_data(uint64_t nthreads, uint64_t visited_reserve)
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::setup_thread_data(uint64_t nthreads, uint64_t visited_reserve)
 {
     diskann::cout << "Setting up thread-specific contexts for nthreads: " << nthreads << std::endl;
 // omp parallel for to generate unique thread IDs
@@ -136,8 +136,8 @@ void PQFlashIndex<T, LabelT>::setup_thread_data(uint64_t nthreads, uint64_t visi
     _load_flag = true;
 }
 
-template <typename T, typename LabelT>
-std::vector<bool> PQFlashIndex<T, LabelT>::read_nodes(const std::vector<uint32_t> &node_ids,
+template <typename T, typename TagT, typename LabelT>
+std::vector<bool> PQFlashIndex<T, TagT, LabelT>::read_nodes(const std::vector<uint32_t> &node_ids,
                                                       std::vector<T *> &coord_buffers,
                                                       std::vector<std::pair<uint32_t, uint32_t *>> &nbr_buffers)
 {
@@ -200,7 +200,7 @@ std::vector<bool> PQFlashIndex<T, LabelT>::read_nodes(const std::vector<uint32_t
     return retval;
 }
 
-template <typename T, typename LabelT> void PQFlashIndex<T, LabelT>::load_cache_list(std::vector<uint32_t> &node_list)
+template <typename T, typename TagT, typename LabelT> void PQFlashIndex<T, TagT, LabelT>::load_cache_list(std::vector<uint32_t> &node_list)
 {
     diskann::cout << "Loading the cache list into memory.." << std::flush;
     size_t num_cached_nodes = node_list.size();
@@ -254,15 +254,15 @@ template <typename T, typename LabelT> void PQFlashIndex<T, LabelT>::load_cache_
 }
 
 #ifdef EXEC_ENV_OLS
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::generate_cache_list_from_sample_queries(MemoryMappedFiles &files, std::string sample_bin,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::generate_cache_list_from_sample_queries(MemoryMappedFiles &files, std::string sample_bin,
                                                                       uint64_t l_search, uint64_t beamwidth,
                                                                       uint64_t num_nodes_to_cache, uint32_t nthreads,
                                                                       std::vector<uint32_t> &node_list)
 {
 #else
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::generate_cache_list_from_sample_queries(std::string sample_bin, uint64_t l_search,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::generate_cache_list_from_sample_queries(std::string sample_bin, uint64_t l_search,
                                                                       uint64_t beamwidth, uint64_t num_nodes_to_cache,
                                                                       uint32_t nthreads,
                                                                       std::vector<uint32_t> &node_list)
@@ -347,8 +347,8 @@ void PQFlashIndex<T, LabelT>::generate_cache_list_from_sample_queries(std::strin
     diskann::aligned_free(samples);
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::cache_bfs_levels(uint64_t num_nodes_to_cache, std::vector<uint32_t> &node_list,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::cache_bfs_levels(uint64_t num_nodes_to_cache, std::vector<uint32_t> &node_list,
                                                const bool shuffle)
 {
     std::random_device rng;
@@ -495,7 +495,7 @@ void PQFlashIndex<T, LabelT>::cache_bfs_levels(uint64_t num_nodes_to_cache, std:
     diskann::cout << "done" << std::endl;
 }
 
-template <typename T, typename LabelT> void PQFlashIndex<T, LabelT>::use_medoids_data_as_centroids()
+template <typename T, typename TagT, typename LabelT> void PQFlashIndex<T, TagT, LabelT>::use_medoids_data_as_centroids()
 {
     if (_centroid_data != nullptr)
         aligned_free(_centroid_data);
@@ -543,8 +543,8 @@ template <typename T, typename LabelT> void PQFlashIndex<T, LabelT>::use_medoids
     }
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::generate_random_labels(std::vector<LabelT> &labels, const uint32_t num_labels,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::generate_random_labels(std::vector<LabelT> &labels, const uint32_t num_labels,
                                                      const uint32_t nthreads)
 {
     std::random_device rd;
@@ -570,8 +570,8 @@ void PQFlashIndex<T, LabelT>::generate_random_labels(std::vector<LabelT> &labels
     }
 }
 
-template <typename T, typename LabelT>
-std::unordered_map<std::string, LabelT> PQFlashIndex<T, LabelT>::load_label_map(std::basic_istream<char> &map_reader)
+template <typename T, typename TagT, typename LabelT>
+std::unordered_map<std::string, LabelT> PQFlashIndex<T, TagT, LabelT>::load_label_map(std::basic_istream<char> &map_reader)
 {
     std::unordered_map<std::string, LabelT> string_to_int_mp;
     std::string line, token;
@@ -589,8 +589,8 @@ std::unordered_map<std::string, LabelT> PQFlashIndex<T, LabelT>::load_label_map(
     return string_to_int_mp;
 }
 
-template <typename T, typename LabelT>
-LabelT PQFlashIndex<T, LabelT>::get_converted_label(const std::string &filter_label)
+template <typename T, typename TagT, typename LabelT>
+LabelT PQFlashIndex<T, TagT, LabelT>::get_converted_label(const std::string &filter_label)
 {
     if (_label_map.find(filter_label) != _label_map.end())
     {
@@ -606,15 +606,15 @@ LabelT PQFlashIndex<T, LabelT>::get_converted_label(const std::string &filter_la
     throw diskann::ANNException(stream.str(), -1, __FUNCSIG__, __FILE__, __LINE__);
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::reset_stream_for_reading(std::basic_istream<char> &infile)
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::reset_stream_for_reading(std::basic_istream<char> &infile)
 {
     infile.clear();
     infile.seekg(0);
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::get_label_file_metadata(const std::string &fileContent, uint32_t &num_pts,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::get_label_file_metadata(const std::string &fileContent, uint32_t &num_pts,
                                                       uint32_t &num_total_labels)
 {
     num_pts = 0;
@@ -657,8 +657,8 @@ void PQFlashIndex<T, LabelT>::get_label_file_metadata(const std::string &fileCon
                   << std::endl;
 }
 
-template <typename T, typename LabelT>
-inline bool PQFlashIndex<T, LabelT>::point_has_label(uint32_t point_id, LabelT label_id)
+template <typename T, typename TagT, typename LabelT>
+inline bool PQFlashIndex<T, TagT, LabelT>::point_has_label(uint32_t point_id, LabelT label_id)
 {
     uint32_t start_vec = _pts_to_label_offsets[point_id];
     uint32_t num_lbls = _pts_to_label_counts[point_id];
@@ -674,8 +674,8 @@ inline bool PQFlashIndex<T, LabelT>::point_has_label(uint32_t point_id, LabelT l
     return ret_val;
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::parse_label_file(std::basic_istream<char> &infile, size_t &num_points_labels)
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::parse_label_file(std::basic_istream<char> &infile, size_t &num_points_labels)
 {
     infile.seekg(0, std::ios::end);
     size_t file_size = infile.tellg();
@@ -757,47 +757,49 @@ void PQFlashIndex<T, LabelT>::parse_label_file(std::basic_istream<char> &infile,
     reset_stream_for_reading(infile);
 }
 
-template <typename T, typename LabelT> void PQFlashIndex<T, LabelT>::set_universal_label(const LabelT &label)
+template <typename T, typename TagT, typename LabelT> void PQFlashIndex<T, TagT, LabelT>::set_universal_label(const LabelT &label)
 {
     _use_universal_label = true;
     _universal_filter_label = label;
 }
 
 #ifdef EXEC_ENV_OLS
-template <typename T, typename LabelT>
-int PQFlashIndex<T, LabelT>::load(MemoryMappedFiles &files, uint32_t num_threads, const char *index_prefix)
+template <typename T, typename TagT, typename LabelT>
+int PQFlashIndex<T, TagT, LabelT>::load(MemoryMappedFiles &files, uint32_t num_threads, const char *index_prefix)
 {
 #else
-template <typename T, typename LabelT> int PQFlashIndex<T, LabelT>::load(uint32_t num_threads, const char *index_prefix)
+template <typename T, typename TagT, typename LabelT> int PQFlashIndex<T, TagT, LabelT>::load(uint32_t num_threads, const char *index_prefix)
 {
 #endif
     std::string pq_table_bin = std::string(index_prefix) + "_pq_pivots.bin";
     std::string pq_compressed_vectors = std::string(index_prefix) + "_pq_compressed.bin";
     std::string _disk_index_file = std::string(index_prefix) + "_disk.index";
+    std::string _mem_index_file = std::string(index_prefix) + "_mem.index";
 #ifdef EXEC_ENV_OLS
     return load_from_separate_paths(files, num_threads, _disk_index_file.c_str(), pq_table_bin.c_str(),
                                     pq_compressed_vectors.c_str());
 #else
     return load_from_separate_paths(num_threads, _disk_index_file.c_str(), pq_table_bin.c_str(),
-                                    pq_compressed_vectors.c_str());
+                                    pq_compressed_vectors.c_str(), _mem_index_file.c_str());
 #endif
 }
 
 #ifdef EXEC_ENV_OLS
-template <typename T, typename LabelT>
-int PQFlashIndex<T, LabelT>::load_from_separate_paths(diskann::MemoryMappedFiles &files, uint32_t num_threads,
+template <typename T, typename TagT, typename LabelT>
+int PQFlashIndex<T, TagT, LabelT>::load_from_separate_paths(diskann::MemoryMappedFiles &files, uint32_t num_threads,
                                                       const char *index_filepath, const char *pivots_filepath,
-                                                      const char *compressed_filepath)
+                                                      const char *compressed_filepath, const char *mem_index_filepath)
 {
 #else
-template <typename T, typename LabelT>
-int PQFlashIndex<T, LabelT>::load_from_separate_paths(uint32_t num_threads, const char *index_filepath,
-                                                      const char *pivots_filepath, const char *compressed_filepath)
+template <typename T, typename TagT, typename LabelT>
+int PQFlashIndex<T, TagT, LabelT>::load_from_separate_paths(uint32_t num_threads, const char *index_filepath,
+                                                      const char *pivots_filepath, const char *compressed_filepath, const char *mem_index_filepath)
 {
 #endif
     std::string pq_table_bin = pivots_filepath;
     std::string pq_compressed_vectors = compressed_filepath;
     std::string _disk_index_file = index_filepath;
+    std::string _mem_index_file = mem_index_filepath;
     std::string medoids_file = std::string(_disk_index_file) + "_medoids.bin";
     std::string centroids_file = std::string(_disk_index_file) + "_centroids.bin";
 
@@ -805,6 +807,8 @@ int PQFlashIndex<T, LabelT>::load_from_separate_paths(uint32_t num_threads, cons
     std::string labels_to_medoids = std ::string(_disk_index_file) + "_labels_to_medoids.txt";
     std::string dummy_map_file = std ::string(_disk_index_file) + "_dummy_map.txt";
     std::string labels_map_file = std ::string(_disk_index_file) + "_labels_map.txt";
+
+    std::string tags_file = std ::string(_mem_index_file) + ".tags";
     size_t num_pts_in_label_file = 0;
 
     size_t pq_file_dim, pq_file_num_centroids;
@@ -836,7 +840,7 @@ int PQFlashIndex<T, LabelT>::load_from_separate_paths(uint32_t num_threads, cons
 #endif
 
     this->_num_points = npts_u64;
-    this->_n_chunks = nchunks_u64;
+    this->_n_chunks = nchunks_u64;    
 #ifdef EXEC_ENV_OLS
     if (files.fileExists(labels_file))
     {
@@ -1196,6 +1200,48 @@ int PQFlashIndex<T, LabelT>::load_from_separate_paths(uint32_t num_threads, cons
         diskann::cout << "Setting re-scaling factor of base vectors to " << this->_max_base_norm << std::endl;
         delete[] norm_val;
     }
+
+#ifdef EXEC_ENV_OLS
+    if (files.fileExists(tags_file))
+    {
+        size_t file_dim, file_num_points;
+        TagT *tag_data;
+        load_bin<TagT>(std::string(files), tag_data, file_num_points, file_dim);
+#else
+    if (file_exists(tags_file))
+    {
+        size_t file_dim, file_num_points;
+        TagT *tag_data;
+        load_bin<TagT>(std::string(tags_file), tag_data, file_num_points, file_dim);
+#endif
+        this->_enable_tag = true;
+        if (file_dim != 1)
+        {
+            std::stringstream stream;
+            stream << "ERROR: Found " << file_dim << " dimensions for tags,"
+                << "but tag file must have 1 dimension." << std::endl;
+            diskann::cerr << stream.str() << std::endl;
+            delete[] tag_data;
+            throw diskann::ANNException(stream.str(), -1, __FUNCSIG__, __FILE__, __LINE__);
+        }
+
+        const size_t num_data_points = file_num_points - defaults::NUM_FROZEN_POINTS_STATIC;
+        //_location_to_tag.reserve(num_data_points);
+        //_tag_to_location.reserve(num_data_points);
+        for (uint32_t i = 0; i < (uint32_t)num_data_points; i++)
+        {
+            TagT tag = *(tag_data + i);
+            // currently no delete support in pq flash index
+            //if (_delete_set->find(i) == _delete_set->end())
+            //{
+                _location_to_tag[i] = tag;
+                _tag_to_location[tag] = i;
+            //}
+        }
+        diskann::cout << "Tags loaded." << std::endl;
+        delete[] tag_data;
+    }
+
     diskann::cout << "done.." << std::endl;
     return 0;
 }
@@ -1235,8 +1281,8 @@ bool getNextCompletedRequest(const IOContext &ctx, size_t size, int &completedIn
 }
 #endif
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
                                                  uint64_t *indices, float *distances, const uint64_t beam_width,
                                                  const bool use_reorder_data, QueryStats *stats)
 {
@@ -1244,8 +1290,8 @@ void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t
                        use_reorder_data, stats);
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
                                                  uint64_t *indices, float *distances, const uint64_t beam_width,
                                                  const bool use_filter, const LabelT &filter_label,
                                                  const bool use_reorder_data, QueryStats *stats)
@@ -1254,8 +1300,8 @@ void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t
                        std::numeric_limits<uint32_t>::max(), use_reorder_data, stats);
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
                                                  uint64_t *indices, float *distances, const uint64_t beam_width,
                                                  const uint32_t io_limit, const bool use_reorder_data,
                                                  QueryStats *stats)
@@ -1265,8 +1311,8 @@ void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t
                        use_reorder_data, stats);
 }
 
-template <typename T, typename LabelT>
-void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
+template <typename T, typename TagT, typename LabelT>
+void PQFlashIndex<T, TagT, LabelT>::cached_beam_search(const T *query1, const uint64_t k_search, const uint64_t l_search,
                                                  uint64_t *indices, float *distances, const uint64_t beam_width,
                                                  const bool use_filter, const LabelT &filter_label,
                                                  const uint32_t io_limit, const bool use_reorder_data,
@@ -1674,6 +1720,17 @@ void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t
             indices[i] = _dummy_to_real_map[key];
         }
 
+        //TagT tag;
+        if (_enable_tag)
+        {
+            auto item = _location_to_tag.find(indices[i]);
+            if (item != _location_to_tag.end())
+                indices[i] = item->second;
+            else
+                throw diskann::ANNException("Found non existing node !", -1, __FUNCSIG__, __FILE__,
+                    __LINE__);
+        }
+
         if (distances != nullptr)
         {
             distances[i] = full_retset[i].distance;
@@ -1702,8 +1759,8 @@ void PQFlashIndex<T, LabelT>::cached_beam_search(const T *query1, const uint64_t
 // range search returns results of all neighbors within distance of range.
 // indices and distances need to be pre-allocated of size l_search and the
 // return value is the number of matching hits.
-template <typename T, typename LabelT>
-uint32_t PQFlashIndex<T, LabelT>::range_search(const T *query1, const double range, const uint64_t min_l_search,
+template <typename T, typename TagT, typename LabelT>
+uint32_t PQFlashIndex<T, TagT, LabelT>::range_search(const T *query1, const double range, const uint64_t min_l_search,
                                                const uint64_t max_l_search, std::vector<uint64_t> &indices,
                                                std::vector<float> &distances, const uint64_t min_beam_width,
                                                QueryStats *stats)
@@ -1743,23 +1800,23 @@ uint32_t PQFlashIndex<T, LabelT>::range_search(const T *query1, const double ran
     return res_count;
 }
 
-template <typename T, typename LabelT> uint64_t PQFlashIndex<T, LabelT>::get_data_dim()
+template <typename T, typename TagT, typename LabelT> uint64_t PQFlashIndex<T, TagT, LabelT>::get_data_dim()
 {
     return _data_dim;
 }
 
-template <typename T, typename LabelT> diskann::Metric PQFlashIndex<T, LabelT>::get_metric()
+template <typename T, typename TagT, typename LabelT> diskann::Metric PQFlashIndex<T, TagT, LabelT>::get_metric()
 {
     return this->metric;
 }
 
 #ifdef EXEC_ENV_OLS
-template <typename T, typename LabelT> char *PQFlashIndex<T, LabelT>::getHeaderBytes()
+template <typename T, typename TagT, typename LabelT> char *PQFlashIndex<T, TagT, LabelT>::getHeaderBytes()
 {
     IOContext &ctx = reader->get_ctx();
     AlignedRead readReq;
-    readReq.buf = new char[PQFlashIndex<T, LabelT>::HEADER_SIZE];
-    readReq.len = PQFlashIndex<T, LabelT>::HEADER_SIZE;
+    readReq.buf = new char[PQFlashIndex<T, TagT, LabelT>::HEADER_SIZE];
+    readReq.len = PQFlashIndex<T, TagT, LabelT>::HEADER_SIZE;
     readReq.offset = 0;
 
     std::vector<AlignedRead> readReqs;
@@ -1771,24 +1828,31 @@ template <typename T, typename LabelT> char *PQFlashIndex<T, LabelT>::getHeaderB
 }
 #endif
 
-template <typename T, typename LabelT>
-std::vector<std::uint8_t> PQFlashIndex<T, LabelT>::get_pq_vector(std::uint64_t vid)
+template <typename T, typename TagT, typename LabelT>
+std::vector<std::uint8_t> PQFlashIndex<T, TagT, LabelT>::get_pq_vector(std::uint64_t vid)
 {
     std::uint8_t *pqVec = &this->data[vid * this->_n_chunks];
     return std::vector<std::uint8_t>(pqVec, pqVec + this->_n_chunks);
 }
 
-template <typename T, typename LabelT> std::uint64_t PQFlashIndex<T, LabelT>::get_num_points()
+template <typename T, typename TagT, typename LabelT> std::uint64_t PQFlashIndex<T, TagT, LabelT>::get_num_points()
 {
     return _num_points;
 }
 
 // instantiations
-template class PQFlashIndex<uint8_t>;
-template class PQFlashIndex<int8_t>;
-template class PQFlashIndex<float>;
-template class PQFlashIndex<uint8_t, uint16_t>;
-template class PQFlashIndex<int8_t, uint16_t>;
-template class PQFlashIndex<float, uint16_t>;
+template class PQFlashIndex<uint8_t, uint32_t>;
+template class PQFlashIndex<int8_t, uint32_t>;
+template class PQFlashIndex<float, uint32_t>;
+template class PQFlashIndex<uint8_t, uint32_t, uint16_t>;
+template class PQFlashIndex<int8_t, uint32_t, uint16_t>;
+template class PQFlashIndex<float, uint32_t, uint16_t>;
+
+template class PQFlashIndex<uint8_t, uint64_t>;
+template class PQFlashIndex<int8_t, uint64_t>;
+template class PQFlashIndex<float, uint64_t>;
+template class PQFlashIndex<uint8_t, uint64_t, uint16_t>;
+template class PQFlashIndex<int8_t, uint64_t, uint16_t>;
+template class PQFlashIndex<float, uint64_t, uint16_t>;
 
 } // namespace diskann

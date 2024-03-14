@@ -41,7 +41,7 @@ const uint32_t NUM_NODES_TO_CACHE = 250000;
 const uint32_t WARMUP_L = 20;
 const uint32_t NUM_KMEANS_REPS = 12;
 
-template <typename T, typename LabelT> class PQFlashIndex;
+template <typename T, typename TagT, typename LabelT> class PQFlashIndex;
 
 DISKANN_DLLEXPORT double get_memory_budget(const std::string &mem_budget_str);
 DISKANN_DLLEXPORT double get_memory_budget(double search_ram_budget_in_gb);
@@ -74,31 +74,31 @@ template <typename T>
 DISKANN_DLLEXPORT std::string preprocess_base_file(const std::string &infile, const std::string &indexPrefix,
                                                    diskann::Metric &distMetric);
 
-template <typename T, typename LabelT = uint32_t>
+template <typename T, typename TagT = uint32_t, typename LabelT = uint32_t>
 DISKANN_DLLEXPORT int build_merged_vamana_index(std::string base_file, diskann::Metric _compareMetric, uint32_t L,
                                                 uint32_t R, double sampling_rate, double ram_budget,
                                                 std::string mem_index_path, std::string medoids_file,
-                                                std::string centroids_file, size_t build_pq_bytes, bool use_opq,
+                                                std::string centroids_file, size_t build_pq_bytes, bool enable_tag, bool use_opq,
                                                 uint32_t num_threads, bool use_filters = false,
                                                 const std::string &label_file = std::string(""),
                                                 const std::string &labels_to_medoids_file = std::string(""),
-                                                const std::string &universal_label = "", const uint32_t Lf = 0);
+                                                const std::string &universal_label = "", const uint32_t Lf = 0, std::vector<TagT> &tags = std::vector<TagT>());
 
 template <typename T, typename LabelT>
-DISKANN_DLLEXPORT uint32_t optimize_beamwidth(std::unique_ptr<diskann::PQFlashIndex<T, LabelT>> &_pFlashIndex,
+DISKANN_DLLEXPORT uint32_t optimize_beamwidth(std::unique_ptr<diskann::PQFlashIndex<T, uint32_t, LabelT>> &_pFlashIndex,
                                               T *tuning_sample, uint64_t tuning_sample_num,
                                               uint64_t tuning_sample_aligned_dim, uint32_t L, uint32_t nthreads,
                                               uint32_t start_bw = 2);
 
-template <typename T, typename LabelT = uint32_t>
+template <typename T, typename TagT = uint32_t, typename LabelT = uint32_t>
 DISKANN_DLLEXPORT int build_disk_index(
     const char *dataFilePath, const char *indexFilePath, const char *indexBuildParameters,
-    diskann::Metric _compareMetric, bool use_opq = false,
+    diskann::Metric _compareMetric, bool enable_tag = false, bool use_opq = false,
     const std::string &codebook_prefix = "", // default is empty for no codebook pass in
     bool use_filters = false,
     const std::string &label_file = std::string(""), // default is empty string for no label_file
     const std::string &universal_label = "", const uint32_t filter_threshold = 0,
-    const uint32_t Lf = 0); // default is empty string for no universal label
+    const uint32_t Lf = 0, std::vector<TagT> &tags = std::vector<TagT>()); // default is empty string for no universal label
 
 template <typename T>
 DISKANN_DLLEXPORT void create_disk_layout(const std::string base_file, const std::string mem_index_file,

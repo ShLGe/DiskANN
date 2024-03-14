@@ -19,6 +19,10 @@ else()
     endif()
     add_library(${PROJECT_NAME} ${CPP_SOURCES})
     add_library(${PROJECT_NAME}_s STATIC ${CPP_SOURCES})
+
+    # Set -fPIC flag for the third target
+    add_library(${PROJECT_NAME}_pic STATIC ${CPP_SOURCES})
+    set_target_properties(${PROJECT_NAME}_pic PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 
 if (NOT MSVC)

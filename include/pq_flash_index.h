@@ -15,13 +15,15 @@
 #include "scratch.h"
 #include "tsl/robin_map.h"
 #include "tsl/robin_set.h"
+#include <map>
+
 
 #define FULL_PRECISION_REORDER_MULTIPLIER 3
 
 namespace diskann
 {
 
-template <typename T, typename LabelT = uint32_t> class PQFlashIndex
+template <typename T, typename TagT = uint32_t, typename LabelT = uint32_t> class PQFlashIndex
 {
   public:
     DISKANN_DLLEXPORT PQFlashIndex(std::shared_ptr<AlignedFileReader> &fileReader,
@@ -38,10 +40,10 @@ template <typename T, typename LabelT = uint32_t> class PQFlashIndex
 #ifdef EXEC_ENV_OLS
     DISKANN_DLLEXPORT int load_from_separate_paths(diskann::MemoryMappedFiles &files, uint32_t num_threads,
                                                    const char *index_filepath, const char *pivots_filepath,
-                                                   const char *compressed_filepath);
+                                                   const char *compressed_filepath, const char *mem_index_filepath);
 #else
     DISKANN_DLLEXPORT int load_from_separate_paths(uint32_t num_threads, const char *index_filepath,
-                                                   const char *pivots_filepath, const char *compressed_filepath);
+                                                   const char *pivots_filepath, const char *compressed_filepath, const char *mem_index_filepath);
 #endif
 
     DISKANN_DLLEXPORT void load_cache_list(std::vector<uint32_t> &node_list);
@@ -220,6 +222,12 @@ template <typename T, typename LabelT = uint32_t> class PQFlashIndex
     bool _count_visited_nodes = false;
     bool _reorder_data_exists = false;
     uint64_t _reoreder_data_offset = 0;
+
+    // lazy_delete removes entry from _location_to_tag and _tag_to_location. If
+    // _location_to_tag does not resolve a location, infer that it was deleted.
+    bool _enable_tag = false;
+    std::map<TagT, uint32_t> _tag_to_location;
+    std::map<uint32_t, TagT> _location_to_tag;
 
     // filter support
     uint32_t *_pts_to_label_offsets = nullptr;

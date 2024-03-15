@@ -804,9 +804,12 @@ int build_merged_vamana_index(std::string base_file, diskann::Metric compareMetr
                           labels_to_medoids_file);
     diskann::cout << timer.elapsed_seconds_for_step("merging indices") << std::endl;
 
-    std::string tags_file = mem_index_path + ".tags";
+    if (enable_tag) {
 
-    save_tags_utils(tags_file, tags, base_num, defaults::NUM_FROZEN_POINTS_STATIC);
+        std::string tags_file = mem_index_path + ".tags";
+
+        save_tags_utils(tags_file, tags, base_num, defaults::NUM_FROZEN_POINTS_STATIC);
+    }
 
     // delete tempFiles
     for (int p = 0; p < num_parts; p++)
@@ -1149,7 +1152,7 @@ template <typename T, typename TagT, typename LabelT>
 int build_disk_index(const char *dataFilePath, const char *indexFilePath, const char *indexBuildParameters,
                      diskann::Metric compareMetric, bool enable_tag, bool use_opq, const std::string &codebook_prefix, bool use_filters,
                      const std::string &label_file, const std::string &universal_label, const uint32_t filter_threshold,
-                     const uint32_t Lf)
+                     const uint32_t Lf, std::vector<TagT> &tags)
 {
     std::stringstream parser;
     parser << std::string(indexBuildParameters);
@@ -1374,7 +1377,7 @@ int build_disk_index(const char *dataFilePath, const char *indexFilePath, const 
     diskann::build_merged_vamana_index<T, TagT, LabelT>(data_file_to_use.c_str(), diskann::Metric::L2, L, R, p_val,
                                                   indexing_ram_budget, mem_index_path, medoids_path, centroids_path,
                                                   build_pq_bytes, enable_tag, use_opq, num_threads, use_filters, labels_file_to_use,
-                                                  labels_to_medoids_path, universal_label, Lf);
+                                                  labels_to_medoids_path, universal_label, Lf, tags);
     diskann::cout << timer.elapsed_seconds_for_step("building merged vamana index") << std::endl;
 
     timer.reset();
@@ -1422,7 +1425,7 @@ int build_disk_index(const char *dataFilePath, const char *indexFilePath, const 
 
     return 0;
 }
-/*
+
 template DISKANN_DLLEXPORT void create_disk_layout<int8_t>(const std::string base_file,
                                                            const std::string mem_index_file,
                                                            const std::string output_file,
@@ -1626,5 +1629,5 @@ template DISKANN_DLLEXPORT int build_merged_vamana_index<uint8_t, uint32_t, uint
     double ram_budget, std::string mem_index_path, std::string medoids_path, std::string centroids_file,
     size_t build_pq_bytes, bool enable_tag, bool use_opq, uint32_t num_threads, bool use_filters, const std::string &label_file,
     const std::string &labels_to_medoids_file, const std::string &universal_label, const uint32_t Lf, std::vector<uint32_t> &tags);
-*/
+
 }; // namespace diskann

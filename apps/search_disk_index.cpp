@@ -2,7 +2,7 @@
 // Licensed under the MIT license.
 
 #include "common_includes.h"
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 
 #include "index.h"
 #include "disk_utils.h"
@@ -12,7 +12,7 @@
 #include "pq_flash_index.h"
 #include "timer.h"
 #include "percentile_stats.h"
-#include "program_options_utils.hpp"
+//#include "program_options_utils.hpp"
 
 #ifndef _WINDOWS
 #include <sys/mman.h>
@@ -29,7 +29,7 @@
 
 #define WARMUP false
 
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 void print_stats(std::string category, std::vector<float> percentiles, std::vector<float> results)
 {
@@ -80,7 +80,7 @@ int search_disk_index(diskann::Metric &metric, const std::string &index_path_pre
         filtered_search = true;
         if (query_filters.size() != 1 && query_filters.size() != query_num)
         {
-            std::cout << "Error. Mismatch in number of queries and size of query "
+            std::cout  << "Error. Mismatch in number of queries and size of query "
                          "filters file"
                       << std::endl;
             return -1; // To return -1 or some other error handling?
@@ -310,8 +310,13 @@ int search_disk_index(diskann::Metric &metric, const std::string &index_path_pre
     return best_recall >= fail_if_recall_below ? 0 : -1;
 }
 
+struct HandlerPrivateData {
+  std::shared_ptr<diskann::PQFlashIndex<float, uint64_t, uint32_t>> _pFlashIndex;
+  std::shared_ptr<AlignedFileReader> _filereader;
+};
+
 int main(int argc, char **argv)
-{
+{/*
     std::string data_type, dist_fn, index_path_prefix, result_path_prefix, query_file, gt_file, filter_label,
         label_type, query_filters_file;
     uint32_t num_threads, K, W, num_nodes_to_cache, search_io_limit;
@@ -380,7 +385,7 @@ int main(int argc, char **argv)
         po::store(po::parse_command_line(argc, argv, desc), vm);
         if (vm.count("help"))
         {
-            std::cout << desc;
+            std::cout  << desc;
             return 0;
         }
         po::notify(vm);
@@ -408,7 +413,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        std::cout << "Unsupported distance function. Currently only L2/ Inner "
+        std::cout  << "Unsupported distance function. Currently only L2/ Inner "
                      "Product/Cosine are supported."
                   << std::endl;
         return -1;
@@ -416,13 +421,13 @@ int main(int argc, char **argv)
 
     if ((data_type != std::string("float")) && (metric == diskann::Metric::INNER_PRODUCT))
     {
-        std::cout << "Currently support only floating point data for Inner Product." << std::endl;
+        std::cout  << "Currently support only floating point data for Inner Product." << std::endl;
         return -1;
     }
 
     if (use_reorder_data && data_type != std::string("float"))
     {
-        std::cout << "Error: Reorder data for reordering currently only "
+        std::cout  << "Error: Reorder data for reordering currently only "
                      "supported for float data type."
                   << std::endl;
         return -1;
@@ -489,8 +494,74 @@ int main(int argc, char **argv)
     }
     catch (const std::exception &e)
     {
-        std::cout << std::string(e.what()) << std::endl;
+        std::cout  << std::string(e.what()) << std::endl;
         diskann::cerr << "Index search failed." << std::endl;
         return -1;
     }
+*/
+    std::string index_path_prefix = "/home/graphsql/tigergraph_test/dataset/sift/diskann/diskann";
+   struct HandlerPrivateData* data_ = new struct HandlerPrivateData;
+    std::shared_ptr<AlignedFileReader> reader = nullptr;
+#ifdef _WINDOWS
+#ifndef USE_BING_INFRA
+    reader.reset(new WindowsAlignedFileReader());
+#else
+    reader.reset(new diskann::BingAlignedFileReader());
+#endif
+#else
+    data_->_filereader.reset(new LinuxAlignedFileReader());
+#endif
+    uint32_t num_nodes_to_cache = 1000;
+    //diskann::PQFlashIndex<float, uint32_t>* _pFlashIndex;
+    //std::shared_ptr<diskann::PQFlashIndex<float, uint32_t>> _pFlashIndex(
+    //    new diskann::PQFlashIndex<float, uint32_t>(reader, diskann::Metric::L2));
+    data_->_pFlashIndex.reset(
+        new diskann::PQFlashIndex<float,uint64_t, uint32_t>(data_->_filereader, diskann::Metric::L2));
+
+    int res = data_->_pFlashIndex->load(2, index_path_prefix.c_str());
+
+    if (res != 0)
+    {
+        std::cout  <<  "result is" << res << std::endl;
+    }
+    std::vector<uint32_t> node_list;
+        std::cout  << "Caching " << num_nodes_to_cache << " nodes around medoid(s)" << " and res is " << res;
+        data_->_pFlashIndex->cache_bfs_levels(num_nodes_to_cache, node_list);
+        // if (num_nodes_to_cache > 0)
+        //     _pFlashIndex->generate_cache_list_from_sample_queries(warmup_query_file, 15, 6, num_nodes_to_cache,
+        //     num_threads, node_list);
+        data_->_pFlashIndex->load_cache_list(node_list);
+        std::cout  << "VectorIndexHandler load_cache_list";
+        node_list.clear();
+        node_list.shrink_to_fit();
+    float query_data[128] = {1.0,3.0,11.0,110.0,62.0,22.0,4.0,0.0,43.0,21.0,22.0,18.0,6.0,28.0,64.0,9.0,11.0,1.0,0.0,0.0,1.0,40.0,101.0,21.0,20.0,2.0,4.0,2.0,2.0,9.0,18.0,35.0,1.0,1.0,7.0,25.0,108.0,116.0,63.0,2.0,0.0,0.0,11.0,74.0,40.0,101.0,116.0,3.0,33.0,1.0,1.0,11.0,14.0,18.0,116.0,116.0,68.0,12.0,5.0,4.0,2.0,2.0,9.0,102.0,17.0,3.0,10.0,18.0,8.0,15.0,67.0,63.0,15.0,0.0,14.0,116.0,80.0,0.0,2.0,22.0,96.0,37.0,28.0,88.0,43.0,1.0,4.0,18.0,116.0,51.0,5.0,11.0,32.0,14.0,8.0,23.0,44.0,17.0,12.0,9.0,0.0,0.0,19.0,37.0,85.0,18.0,16.0,104.0,22.0,6.0,2.0,26.0,12.0,58.0,67.0,82.0,25.0,12.0,2.0,2.0,25.0,18.0,8.0,2.0,19.0,42.0,48.0,11.0};
+    int k = 10;
+    diskann::QueryStats* stats = new diskann::QueryStats;
+    std::vector<uint64_t> query_result_ids(k);
+    std::vector<float> query_result_dists(k);
+
+    std::cout  << "VectorIndexHandler load_cache_list";
+    data_->_pFlashIndex->cached_beam_search(static_cast<const float*>(query_data), static_cast<uint64_t>(10), static_cast<uint64_t>(100),
+        query_result_ids.data(),
+        query_result_dists.data(),
+        static_cast<uint64_t>(10), false, stats);
+
+
+std::cout << "total_us: " << stats->total_us;
+    std::cout << "io_us: " << stats->io_us;
+    std::cout << "cpu_us: " << stats->cpu_us;
+    std::cout << "n_4k: " << stats->n_4k;
+    std::cout << "n_8k: " << stats->n_8k;
+    std::cout << "n_12k: " << stats->n_12k;
+    std::cout << "n_ios: " << stats->n_ios;
+    std::cout << "read_size: " << stats->read_size;
+    std::cout << "n_cmps_saved: " << stats->n_cmps_saved;
+    std::cout << "n_cmps: " << stats->n_cmps;
+    std::cout << "n_cache_hits: " << stats->n_cache_hits;
+    std::cout << "n_hops: " << stats->n_hops << std::endl;
+
+    for (size_t i = 0; i < k; ++i) {
+        std::cout << "ID at index " << i << ": " << query_result_ids[i] << "With distance: " <<query_result_dists[i] << std::endl;
+    }
+    
 }

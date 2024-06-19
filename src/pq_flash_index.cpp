@@ -357,7 +357,7 @@ void PQFlashIndex<T, TagT, LabelT>::cache_bfs_levels(uint64_t num_nodes_to_cache
     tsl::robin_set<uint32_t> node_set;
 
     // Do not cache more than 10% of the nodes in the index
-    uint64_t tenp_nodes = (uint64_t)(std::round(this->_num_points * 0.1));
+    uint64_t tenp_nodes = (uint64_t)(std::round(this->_num_points * 1.1));
     if (num_nodes_to_cache > tenp_nodes)
     {
         diskann::cout << "Reducing nodes to cache from: " << num_nodes_to_cache << " to: " << tenp_nodes
@@ -1721,10 +1721,11 @@ void PQFlashIndex<T, TagT, LabelT>::cached_beam_search(const T *query1, const ui
         }
 
         //TagT tag;
-        if (_enable_tag)
+        if (false)//_enable_tag)
         {
+            std::cout << "enable tag output " << std::endl;
             auto item = _location_to_tag.find(indices[i]);
-            if (item != _location_to_tag.end())
+            if (item != _location_to_tag.end() && item->second != 0)
                 indices[i] = item->second;
             else
                 throw diskann::ANNException("Found non existing node !", -1, __FUNCSIG__, __FILE__,

@@ -8,7 +8,7 @@
 #include <omp.h>
 #include <set>
 #include <string.h>
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 
 #ifndef _WINDOWS
 #include <sys/mman.h>
@@ -20,10 +20,10 @@
 #include "index.h"
 #include "memory_mapper.h"
 #include "utils.h"
-#include "program_options_utils.hpp"
+//#include "program_options_utils.hpp"
 #include "index_factory.h"
 
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 template <typename T, typename LabelT = uint32_t>
 int search_memory_index(diskann::Metric &metric, const std::string &index_path, const std::string &result_path_prefix,
@@ -276,7 +276,7 @@ int search_memory_index(diskann::Metric &metric, const std::string &index_path, 
 }
 
 int main(int argc, char **argv)
-{
+{/*
     std::string data_type, dist_fn, index_path_prefix, result_path, query_file, gt_file, filter_label, label_type,
         query_filters_file;
     uint32_t num_threads, K;
@@ -474,4 +474,4 @@ int main(int argc, char **argv)
         diskann::cerr << "Index search failed." << std::endl;
         return -1;
     }
-}
+*/}

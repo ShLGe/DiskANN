@@ -8,7 +8,7 @@
 #include <iostream>
 #include "tsl/robin_map.h"
 #include "utils.h"
-#define MAX_EVENTS 512
+#define MAX_EVENTS 256
 
 namespace
 {

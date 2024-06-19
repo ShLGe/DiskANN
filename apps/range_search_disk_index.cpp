@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <omp.h>
 #include <set>
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 
 #include "index.h"
 #include "disk_utils.h"
@@ -15,7 +15,7 @@
 #include "pq_flash_index.h"
 #include "partition.h"
 #include "timer.h"
-#include "program_options_utils.hpp"
+//#include "program_options_utils.hpp"
 
 #ifndef _WINDOWS
 #include <sys/mman.h>
@@ -30,7 +30,7 @@
 #endif
 #endif
 
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 #define WARMUP false
 
@@ -268,7 +268,7 @@ int search_disk_index(diskann::Metric &metric, const std::string &index_path_pre
 }
 
 int main(int argc, char **argv)
-{
+{/*
     std::string data_type, dist_fn, index_path_prefix, result_path_prefix, query_file, gt_file;
     uint32_t num_threads, W, num_nodes_to_cache;
     std::vector<uint32_t> Lvec;
@@ -376,4 +376,4 @@ int main(int argc, char **argv)
         diskann::cerr << "Index search failed." << std::endl;
         return -1;
     }
-}
+*/}

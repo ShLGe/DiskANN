@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT license.
 
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 #include <chrono>
 #include <cstdio>
 #include <cstring>
@@ -18,9 +18,9 @@
 #include "memory_mapper.h"
 #include "parameters.h"
 #include "utils.h"
-#include "program_options_utils.hpp"
+//#include "program_options_utils.hpp"
 
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 typedef std::tuple<std::vector<std::vector<uint32_t>>, uint64_t> stitch_indices_return_values;
 
 /*
@@ -51,7 +51,7 @@ inline size_t random(size_t range_from, size_t range_to)
  *
  * Arguments are merely the inputs from the command line.
  */
-void handle_args(int argc, char **argv, std::string &data_type, path &input_data_path, path &final_index_path_prefix,
+/*void handle_args(int argc, char **argv, std::string &data_type, path &input_data_path, path &final_index_path_prefix,
                  path &label_data_path, std::string &universal_label, uint32_t &num_threads, uint32_t &R, uint32_t &L,
                  uint32_t &stitched_R, float &alpha)
 {
@@ -106,7 +106,7 @@ void handle_args(int argc, char **argv, std::string &data_type, path &input_data
         std::cerr << ex.what() << '\n';
         throw;
     }
-}
+}*/
 
 /*
  * Custom index save to write the in-memory index to disk.
@@ -329,7 +329,7 @@ void clean_up_artifacts(path input_data_path, path final_index_path_prefix, labe
 }
 
 int main(int argc, char **argv)
-{
+{/*
     // 1. handle cmdline inputs
     std::string data_type;
     path input_data_path, final_index_path_prefix, label_data_path;
@@ -438,4 +438,4 @@ int main(int argc, char **argv)
     std::cout << "pruned/stitched graph generated in " << index_time.count() << " seconds" << std::endl;
 
     clean_up_artifacts(input_data_path, final_index_path_prefix, all_labels);
-}
+*/}

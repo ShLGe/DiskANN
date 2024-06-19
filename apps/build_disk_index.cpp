@@ -2,19 +2,20 @@
 // Licensed under the MIT license.
 
 #include <omp.h>
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 
 #include "utils.h"
 #include "disk_utils.h"
 #include "math_utils.h"
 #include "index.h"
 #include "partition.h"
-#include "program_options_utils.hpp"
+//#include "program_options_utils.hpp"
 
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 int main(int argc, char **argv)
 {
+  /*
     std::string data_type, dist_fn, data_path, index_path_prefix, codebook_prefix, label_file, universal_label,
         label_type;
     uint32_t num_threads, R, L, disk_PQ, build_PQ, QD, Lf, filter_threshold;
@@ -187,5 +188,25 @@ int main(int argc, char **argv)
         std::cout << std::string(e.what()) << std::endl;
         diskann::cerr << "Index build failed." << std::endl;
         return -1;
+    }*/
+    std::string data_file_path = "/home/graphsql/tigergraph_test/dataset/sift/sift_base.fbin";
+    std::string index_path_prefix = "/home/graphsql/tigergraph_test/dataset/sift/diskann/diskann";
+    uint32_t num_threads=8, R=32, L=200, disk_PQ=0, build_PQ=0, QD=0;
+    float B=1, M=3;
+    bool append_reorder_data = false;
+    //hard code these params. TODO parse index_parameters
+    std::string params = std::string(std::to_string(R)) + " " + std::string(std::to_string(L)) + " " +
+                         std::string(std::to_string(B)) + " " + std::string(std::to_string(M)) + " " +
+                         std::string(std::to_string(num_threads)) + " " + std::string(std::to_string(disk_PQ)) + " " +
+                         std::string(std::to_string(append_reorder_data)) + " " +
+                         std::string(std::to_string(build_PQ)) + " " + std::string(std::to_string(QD));
+
+    std::vector<uint64_t> tags(1000000);
+    for (size_t i = 0; i < tags.size(); ++i) {
+        tags[i] = static_cast<uint64_t>(i) * 5;
     }
+
+    diskann::build_disk_index<float, uint64_t, uint32_t>(data_file_path.c_str(), index_path_prefix.c_str(), params.c_str(),
+                                                        diskann::Metric::L2, true, false, "", false, "",
+                                                        "", 0, 0, tags);
 }

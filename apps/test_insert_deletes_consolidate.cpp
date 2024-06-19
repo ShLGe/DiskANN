@@ -7,12 +7,12 @@
 #include <string.h>
 #include <time.h>
 #include <timer.h>
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 #include <future>
 
 #include "utils.h"
 #include "filter_utils.h"
-#include "program_options_utils.hpp"
+//#include "program_options_utils.hpp"
 #include "index_factory.h"
 
 #ifndef _WINDOWS
@@ -23,7 +23,7 @@
 
 #include "memory_mapper.h"
 
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 // load_aligned_bin modified to read pieces of the file, but using ifstream
 // instead of cached_ifstream.
@@ -372,7 +372,7 @@ void build_incremental_index(const std::string &data_path, diskann::IndexWritePa
 }
 
 int main(int argc, char **argv)
-{
+{/*
     std::string data_type, dist_fn, data_path, index_path_prefix;
     uint32_t num_threads, R, L, num_start_pts;
     float alpha, start_point_norm;
@@ -533,4 +533,4 @@ int main(int argc, char **argv)
     }
 
     return 0;
-}
+*/}

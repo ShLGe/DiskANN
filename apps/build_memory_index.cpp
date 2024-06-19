@@ -3,11 +3,11 @@
 
 #include <omp.h>
 #include <cstring>
-#include <boost/program_options.hpp>
+//#include <boost/program_options.hpp>
 
 #include "index.h"
 #include "utils.h"
-#include "program_options_utils.hpp"
+//#include "program_options_utils.hpp"
 
 #ifndef _WINDOWS
 #include <sys/mman.h>
@@ -20,10 +20,10 @@
 #include "ann_exception.h"
 #include "index_factory.h"
 
-namespace po = boost::program_options;
+//namespace po = boost::program_options;
 
 int main(int argc, char **argv)
-{
+{/*
     std::string data_type, dist_fn, data_path, index_path_prefix, label_file, universal_label, label_type;
     uint32_t num_threads, R, L, Lf, build_PQ_bytes;
     float alpha;
@@ -161,4 +161,4 @@ int main(int argc, char **argv)
         diskann::cerr << "Index build failed." << std::endl;
         return -1;
     }
-}
+*/}
